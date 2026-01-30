@@ -1,0 +1,1 @@
+# smart attendance and school management
