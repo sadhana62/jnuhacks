@@ -1,0 +1,142 @@
+.timetable-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 30px;
+  font-family: "Poppins", sans-serif;
+}
+
+.timetable-heading {
+  font-size: 28px;
+  font-weight: bold;
+  margin-bottom: 20px;
+  color: #0e3f22;
+}
+
+.timetable-card {
+  width: 85%;
+  background-color: #ffffff;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.timetable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.timetable th,
+.timetable td {
+  border: 2px solid #12502b;
+  padding: 12px;
+  text-align: center;
+}
+
+.timetable th {
+  background-color: #12502b;
+  color: white;
+}
+
+.special-period {
+  background-color: #d9f2e6;
+  color: #0e3f22;
+}
+
+/* Holiday Section */
+.holiday-section {
+  margin-top: 30px;
+  text-align: center;
+}
+
+.holiday-section h2 {
+  font-size: 26px;
+  margin-bottom: 10px;
+  font-weight: bold;
+  color: #0e3f22;
+  text-decoration: underline;
+}
+
+.holiday-box {
+  background-color: #e0f7fa;
+  padding: 15px 30px;
+  display: inline-block;
+  border-radius: 12px;
+  font-size: 20px;
+  font-weight: bold;
+  border: 2px solid #00acc1;
+}
+
+.yes {
+  color: #00a84f;
+}
+
+.no {
+  color: #d32f2f;
+}
+
+/* Day grid + card styles */
+.timetable-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+  width: 100%;
+  max-width: 1100px;
+}
+
+.day-card {
+  background: linear-gradient(180deg, #ffffff 0%, #fbfffb 100%);
+  border-radius: 12px;
+  padding: 18px;
+  box-shadow: 0 6px 18px rgba(16, 66, 37, 0.06);
+  border-left: 6px solid #cfeee0;
+  transition: transform 150ms ease, box-shadow 150ms ease;
+}
+.day-card:hover { transform: translateY(-4px); box-shadow: 0 10px 24px rgba(16,66,37,0.08); }
+
+.current-day { border-left-color: #28a745; background: linear-gradient(180deg,#f7fff8, #fff); }
+
+.day-heading {
+  font-size: 20px;
+  margin: 0 0 10px 0;
+  color: #15472b;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.day-heading::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 28px;
+  background: #28a745;
+  border-radius: 3px;
+}
+
+.timetable-day-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+.timetable-day-table th, .timetable-day-table td {
+  padding: 8px 10px;
+  text-align: left;
+  border-bottom: 1px solid #eef6ee;
+}
+.timetable-day-table thead th { color: #2c6b45; font-weight: 700; }
+.timetable-day-table tbody tr:nth-child(odd) { background: #fbfffb; }
+.timetable-day-table tbody tr:hover { background: #f0fff4; }
+.timetable-day-table td:first-child { width: 120px; font-weight: 600; color: #176a3a; }
+.timetable-day-table td:nth-child(2) { color: #3b5246; font-weight: 600; }
+.timetable-day-table td:nth-child(3) { color: #4b4b4b; }
+
+.no-classes { color: #5b6b63; font-style: italic; margin: 12px 0; }
+
+@media (max-width: 600px) {
+  .timetable-heading { font-size: 22px; }
+  .day-heading { font-size: 16px; }
+  .timetable-day-table td:first-child { width: 90px; }
+}
+
