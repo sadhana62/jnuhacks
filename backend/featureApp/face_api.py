@@ -6,133 +6,159 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import os
 import logging
+import cv2
+import uuid
+from werkzeug.utils import secure_filename
 
-
-# Set up logging
+# ---------------- Logging ----------------
 logging.basicConfig(level=logging.INFO)
 
-
-# ------------------ Setup ------------------
+# ---------------- Flask ----------------
 app = Flask(__name__)
 CORS(app)
 
+# ---------------- Build model ONCE (speed fix) ----------------
+DeepFace.build_model("ArcFace")
 
+# ---------------- DB helper (critical fix) ----------------
+def get_db():
+    conn = mysql.connector.connect(
+        host="server.rwebservice.in",
+        user="face_attadance",
+        password="face_attadance",
+        database="face_attadance",
+        autocommit=True
+    )
+    return conn, conn.cursor(buffered=True)
 
-# ✅ MySQL connection
-conn = mysql.connector.connect(
-    host="server.rwebservice.in",
-    user="face_attadance",
-    password="face_attadance",
-    database="face_attadance"
-)
-cursor = conn.cursor()
+# ---------------- Boundary (RELAXED) ----------------
+BOUNDARY_X1, BOUNDARY_Y1 = 100, 50
+BOUNDARY_X2, BOUNDARY_Y2 = 540, 430
 
-# ✅ Cosine similarity
-def cosine_similarity(vec1, vec2):
-    vec1, vec2 = np.array(vec1), np.array(vec2)
-    return np.dot(vec1, vec2) / (np.linalg.norm(vec1) * np.linalg.norm(vec2))
+def is_out_of_boundary(face):
+    x, y, w, h = face
+    cx = x + w // 2
+    cy = y + h // 2
+    return not (BOUNDARY_X1 <= cx <= BOUNDARY_X2 and BOUNDARY_Y1 <= cy <= BOUNDARY_Y2)
 
+# ---------------- Similarity ----------------
+def cosine_similarity(a, b):
+    a, b = np.array(a), np.array(b)
+    return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
 
-
-
+# ==================================================
+# ===================== ENROLL =====================
+# ==================================================
 @app.route("/enroll", methods=["POST"])
-def enroll_student():
+def enroll():
+    temp = None
+    conn = cur = None
     try:
         sid = request.form.get("sid")
-        image_path = request.form.get("image_path")
-        enforce_detection = request.form.get("enforce_detection", "true").lower() == "true"
+        image = request.files.get("image")
 
-        if not sid or not image_path:
-            return jsonify({"success": False, "message": "Missing sid or image_path"})
+        if not sid or not image:
+            return jsonify({"success": False, "message": "Missing input"})
 
-        if not os.path.exists(image_path):
-            return jsonify({"success": False, "message": f"Image file not found: {image_path}"})
+        os.makedirs("temp", exist_ok=True)
+        temp = f"temp/{uuid.uuid4()}.jpg"
+        image.save(temp)
 
-        logging.info(f"Enrolling student {sid} with image: {image_path}")
-        logging.info(f"File size: {os.path.getsize(image_path)} bytes")
+        emb = DeepFace.represent(
+            img_path=temp,
+            model_name="ArcFace",
+            enforce_detection=False
+        )[0]["embedding"]
 
-        try:
-            embedding = DeepFace.represent(img_path=image_path, model_name="ArcFace", enforce_detection=enforce_detection)[0]["embedding"]
-        except ValueError as ve:
-            if enforce_detection:
-                logging.warning(f"Face detection failed with enforce_detection=True. Retrying with enforce_detection=False")
-                try:
-                    embedding = DeepFace.represent(img_path=image_path, model_name="ArcFace", enforce_detection=False)[0]["embedding"]
-                except Exception as e:
-                    logging.error(f"Face detection failed even with enforce_detection=False: {str(e)}")
-                    return jsonify({"success": False, "message": f"Face detection failed: {str(e)}"})
-            else:
-                logging.error(f"Face detection failed: {str(ve)}")
-                return jsonify({"success": False, "message": f"Face detection failed: {str(ve)}"})
+        conn, cur = get_db()
+        cur.execute(
+            "INSERT INTO student_face (sid, embedding) VALUES (%s,%s)",
+            (sid, json.dumps(emb))
+        )
 
-        embedding_json = json.dumps(embedding)
-
-        cursor.execute("INSERT INTO student_face (sid, embedding) VALUES (%s, %s)", (sid, embedding_json))
-        conn.commit()
-
-        return jsonify({"success": True, "message": f"Stored embedding for student {sid}"})
+        return jsonify({"success": True, "message": "Enrolled successfully"})
 
     except Exception as e:
-        logging.exception("Error in enroll_student")
+        logging.exception("Enroll error")
         return jsonify({"success": False, "message": str(e)})
 
+    finally:
+        if cur: cur.close()
+        if conn: conn.close()
+        if temp and os.path.exists(temp): os.remove(temp)
 
-
-
+# ==================================================
+# =================== ATTENDANCE ===================
+# ==================================================
 @app.route("/attendance", methods=["POST"])
 def attendance():
+    temp = None
     try:
         sid = request.form.get("sid")
-        image_path = request.form.get("image_path")
-        enforce_detection = request.form.get("enforce_detection", "true").lower() == "true"
+        image = request.files.get("image")
 
-        if not sid or not image_path:
-            return jsonify({"success": False, "message": "Missing sid or image_path"})
+        if not sid or not image:
+            return jsonify({"success": False, "status": "INVALID_INPUT"})
 
-        if not os.path.exists(image_path):
-            return jsonify({"success": False, "message": f"Image file not found: {image_path}"})
+        os.makedirs("temp", exist_ok=True)
+        temp = f"temp/{uuid.uuid4()}.jpg"
+        image.save(temp)
 
-        logging.info(f"Verifying attendance for student {sid} with image: {image_path}")
-        logging.info(f"File size: {os.path.getsize(image_path)} bytes")
+        img = cv2.imread(temp)
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-        try:
-            result = verify_and_mark_attendance(sid, image_path)
-            return jsonify(result)
-        except ValueError as ve:
-            logging.error(f"Face detection failed: {str(ve)}")
-            return jsonify({"success": False, "message": f"Face detection failed: {str(ve)}"})
+        faces = cv2.CascadeClassifier(
+            cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
+        ).detectMultiScale(gray, 1.3, 5)
+
+        if len(faces) == 0:
+            return jsonify({"success": False, "status": "NO_FACE"})
+
+        for f in faces:
+            if is_out_of_boundary(f):
+                return jsonify({"success": False, "status": "OUT_OF_BOUNDARY"})
+
+        return jsonify(verify(sid, temp))
 
     except Exception as e:
-        logging.exception("Error in attendance verification")
-        return jsonify({"success": False, "message": str(e)})
+        logging.exception("Attendance error")
+        return jsonify({"success": False, "status": "ERROR", "message": str(e)})
 
-# Modify the verify_and_mark_attendance function to include enforce_detection
-def verify_and_mark_attendance(student_id, input_image, threshold=0.6, enforce_detection=True):
+    finally:
+        if temp and os.path.exists(temp): os.remove(temp)
+
+# ==================================================
+# ================= VERIFY ==========================
+# ==================================================
+def verify(sid, img, threshold=0.75):
+    conn = cur = None
     try:
-        input_emb = DeepFace.represent(img_path=input_image, model_name="ArcFace", enforce_detection=enforce_detection)[0]["embedding"]
+        emb = DeepFace.represent(
+            img_path=img,
+            model_name="ArcFace",
+            enforce_detection=False
+        )[0]["embedding"]
 
-        cursor.execute("SELECT embedding FROM student_face WHERE sid = %s", (student_id,))
-        rows = cursor.fetchall()
+        conn, cur = get_db()
+        cur.execute("SELECT embedding FROM student_face WHERE sid=%s", (sid,))
+        rows = cur.fetchall()
 
-        if not rows:
-            return {"success": False, "message": f"No stored embedding found for student {student_id}"}
+        for (e,) in rows:
+            sim = cosine_similarity(emb, json.loads(e))
+            print("SIMILARITY:", sim)
+            if sim > (1 - threshold):
+                cur.execute(
+                    "INSERT INTO face_attendance (sid,status) VALUES (%s,'P')",
+                    (sid,)
+                )
+                return {"success": True, "status": "MATCHED"}
 
-        for row in rows:
-            stored_emb = json.loads(row[0])
-            similarity = cosine_similarity(input_emb, stored_emb)
+        return {"success": False, "status": "NOT_MATCHED"}
 
-            if similarity > (1 - threshold):
-                cursor.execute("INSERT INTO face_attendance (sid, status) VALUES (%s, %s)", (student_id, 'P'))
-                conn.commit()
-                return {"success": True, "message": f"Attendance marked for student {student_id}"}
+    finally:
+        if cur: cur.close()
+        if conn: conn.close()
 
-        return {"success": False, "message": "Face not matched"}
-
-    except Exception as e:
-        logging.exception("Error in verify_and_mark_attendance")
-        return {"success": False, "message": str(e)}
-
-
-
+# ==================================================
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)

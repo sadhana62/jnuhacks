@@ -1,0 +1,104 @@
+<mxfile host="app.diagrams.net">
+  <diagram name="School Management DB">
+    <mxGraphModel dx="1600" dy="900" grid="1" gridSize="10">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- student -->
+        <mxCell id="student" value="student&#10;----------------&#10;PK id&#10;name&#10;father_name&#10;mother_name&#10;dob&#10;gender&#10;street&#10;city&#10;state&#10;zip&#10;phone&#10;email&#10;blood_group&#10;password"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;"
+                vertex="1" parent="1">
+          <mxGeometry x="40" y="40" width="260" height="340" as="geometry"/>
+        </mxCell>
+
+        <!-- student_session -->
+        <mxCell id="student_session" value="student_session&#10;----------------&#10;FK stu_id → student.id&#10;class&#10;section"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;"
+                vertex="1" parent="1">
+          <mxGeometry x="360" y="40" width="260" height="160" as="geometry"/>
+        </mxCell>
+
+        <!-- student_interest -->
+        <mxCell id="student_interest" value="student_interest&#10;----------------&#10;FK stu_id → student.id&#10;interest"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;"
+                vertex="1" parent="1">
+          <mxGeometry x="360" y="230" width="260" height="140" as="geometry"/>
+        </mxCell>
+
+        <!-- seat_assignments -->
+        <mxCell id="seat_assignments" value="seat_assignments&#10;----------------&#10;PK id&#10;FK stu_id → student.id&#10;seat_number&#10;date_assigned"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;"
+                vertex="1" parent="1">
+          <mxGeometry x="360" y="410" width="260" height="180" as="geometry"/>
+        </mxCell>
+
+        <!-- classes -->
+        <mxCell id="classes" value="classes&#10;----------------&#10;PK id&#10;name (UNIQUE)"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;"
+                vertex="1" parent="1">
+          <mxGeometry x="700" y="40" width="240" height="120" as="geometry"/>
+        </mxCell>
+
+        <!-- sections -->
+        <mxCell id="sections" value="sections&#10;----------------&#10;PK id&#10;FK class_id → classes.id&#10;name"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;"
+                vertex="1" parent="1">
+          <mxGeometry x="980" y="40" width="260" height="140" as="geometry"/>
+        </mxCell>
+
+        <!-- class_subjects -->
+        <mxCell id="class_subjects" value="class_subjects&#10;----------------&#10;PK id&#10;FK class_id → classes.id&#10;name"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;"
+                vertex="1" parent="1">
+          <mxGeometry x="980" y="210" width="260" height="140" as="geometry"/>
+        </mxCell>
+
+        <!-- timetables -->
+        <mxCell id="timetables" value="timetables&#10;----------------&#10;PK id&#10;FK class_id → classes.id&#10;section_name&#10;timetable_data (JSON)"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;"
+                vertex="1" parent="1">
+          <mxGeometry x="980" y="380" width="300" height="180" as="geometry"/>
+        </mxCell>
+
+        <!-- School_teachers -->
+        <mxCell id="teachers" value="School_teachers&#10;----------------&#10;PK id&#10;name&#10;father_name&#10;dob&#10;gender&#10;qualification&#10;phone&#10;email&#10;address&#10;subject (JSON)&#10;classes (JSON)&#10;username (UNIQUE)&#10;password"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;"
+                vertex="1" parent="1">
+          <mxGeometry x="40" y="440" width="300" height="360" as="geometry"/>
+        </mxCell>
+
+        <!-- admin_login -->
+        <mxCell id="admin_login" value="admin_login&#10;----------------&#10;PK id&#10;username (UNIQUE)&#10;password&#10;role"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;"
+                vertex="1" parent="1">
+          <mxGeometry x="380" y="640" width="260" height="160" as="geometry"/>
+        </mxCell>
+
+        <!-- holidays -->
+        <mxCell id="holidays" value="holidays&#10;----------------&#10;PK id&#10;date (UNIQUE)&#10;name&#10;created_at"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;"
+                vertex="1" parent="1">
+          <mxGeometry x="700" y="640" width="260" height="160" as="geometry"/>
+        </mxCell>
+
+        <!-- notices -->
+        <mxCell id="notices" value="notices&#10;----------------&#10;PK id&#10;title&#10;text&#10;created_at"
+                style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;"
+                vertex="1" parent="1">
+          <mxGeometry x="1020" y="640" width="260" height="160" as="geometry"/>
+        </mxCell>
+
+        <!-- Relationships -->
+        <mxCell id="r1" style="endArrow=block;html=1;" edge="1" parent="1" source="student" target="student_session"/>
+        <mxCell id="r2" style="endArrow=block;html=1;" edge="1" parent="1" source="student" target="student_interest"/>
+        <mxCell id="r3" style="endArrow=block;html=1;" edge="1" parent="1" source="student" target="seat_assignments"/>
+
+        <mxCell id="r4" style="endArrow=block;html=1;" edge="1" parent="1" source="classes" target="sections"/>
+        <mxCell id="r5" style="endArrow=block;html=1;" edge="1" parent="1" source="classes" target="class_subjects"/>
+        <mxCell id="r6" style="endArrow=block;html=1;" edge="1" parent="1" source="classes" target="timetables"/>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

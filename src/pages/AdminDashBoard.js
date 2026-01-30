@@ -153,7 +153,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (classOptions && classOptions.length > 0) {
       // initial fetch of syllabi
-      fetch('/api/syllabi').then(r => r.json()).then(d => { if (d.success) setSyllabiList(d.syllabi || []) }).catch(()=>{});
+      fetch('http://localhost:3000/api/syllabi').then(r => r.json()).then(d => { if (d.success) setSyllabiList(d.syllabi || []) }).catch(()=>{});
     }
   }, [classOptions]);
 
@@ -840,7 +840,7 @@ export default function AdminDashboard() {
               if (!selectedSyllabusClass) return alert('Select class');
               if (!syllabusFile) return alert('Choose a PDF to upload');
               const fd = new FormData(); fd.append('syllabus', syllabusFile); fd.append('class_id', selectedSyllabusClass);
-              try { const res = await fetch('http://localhost:3000/api/upload-syllabus', { method: 'POST', body: fd }); const data = await res.json(); if (data.success) { alert('Uploaded'); setSyllabusFile(null); setSelectedSyllabusClass(''); fetch('/api/syllabi').then(r=>r.json()).then(d=>{ if(d.success) setSyllabiList(d.syllabi || []) }); } else alert(data.message||'Upload failed'); } catch (err) { console.error(err); alert('Upload error'); }
+              try { const res = await fetch('http://localhost:3000/api/upload-syllabus', { method: 'POST', body: fd }); const data = await res.json(); if (data.success) { alert('Uploaded'); setSyllabusFile(null); setSelectedSyllabusClass(''); fetch('http://localhost:3000/api/syllabi').then(r=>r.json()).then(d=>{ if(d.success) setSyllabiList(d.syllabi || []) }); } else alert(data.message||'Upload failed'); } catch (err) { console.error(err); alert('Upload error'); }
             }} style={{ padding: '8px 12px', background: '#28a745', color: 'white', borderRadius: 6 }}>Upload</button>
           </div>
 

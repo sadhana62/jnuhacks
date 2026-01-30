@@ -74,7 +74,6 @@ function FeatureApp() {
         </Link>
       </div>
     </div>
-    
   );
 }
 

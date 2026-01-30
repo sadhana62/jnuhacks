@@ -10,6 +10,7 @@ const Holidays = () => {
     const fetchHolidays = async () => {
       try {
         const res = await fetch('http://localhost:3000/api/holidays');
+      
         if (!res.ok) throw new Error('Failed to fetch holidays');
         const data = await res.json();
         if (data.success) setHolidays(data.holidays || []);
